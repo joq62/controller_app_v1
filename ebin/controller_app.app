@@ -6,6 +6,6 @@
               {applications,[kernel,stdlib]},
               {env,[]},
               {modules,[controller,controller_app_app,controller_app_sup,
-                        lib_vm]},
+                        lib_appl,lib_vm]},
               {licenses,["Apache 2.0"]},
               {links,[]}]}.
