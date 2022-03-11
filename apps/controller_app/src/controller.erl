@@ -22,6 +22,12 @@
 
 %% External exports
 -export([
+	 all_specs/0,
+	 create_vm/0,
+	 load_start_appl/3,
+	 stop_unload_appl/3,
+	 delete_vm/1,
+	 
 	 get_spec/2,
 	 actual_state/0,
 	 load_read_specs/0,
@@ -40,6 +46,7 @@
 -export([init/1, handle_call/3,handle_cast/2, handle_info/2, terminate/2, code_change/3]).
 
 -record(state, {
+		vm_list,
 		service_specs_info
 	       }).
 
@@ -59,6 +66,54 @@ stop()-> gen_server:call(?SERVER, {stop},infinity).
 %% ====================================================================
 %% Application handling
 %% ====================================================================
+%  create_vm/0,
+%  load_start_appl/3,
+%  stop_unload_appl/2,
+%  delete_vm/1,
+
+%%---------------------------------------------------------------
+%% Function: load_start_appl(ApplId,ApplVsn,Node)
+%% @doc: loads and starts App ApplId,ApplVsn on slave Node         
+%% @param: ApplId,ApplVsn,Node
+%% @returns:ok|{error,Reason}
+%%
+%%---------------------------------------------------------------
+-spec load_start_appl(string(),string(),node())-> ok|{error,term()}.
+load_start_appl(ApplId,ApplVsn,Node)->
+    gen_server:call(?SERVER, {load_start_appl,ApplId,ApplVsn,Node},infinity).
+
+%%---------------------------------------------------------------
+%% Function: stop_unload_appl(ApplId,ApplVsn,Node)
+%% @doc: stopps and unloads  App ApplId,ApplVsn on slave Node         
+%% @param: ApplId,ApplVsn,Node
+%% @returns:ok|{error,Reason}
+%%
+%%---------------------------------------------------------------
+-spec stop_unload_appl(string(),string(),node())-> ok|{error,term()}.
+stop_unload_appl(ApplId,ApplVsn,Node)->
+    gen_server:call(?SERVER, {stop_unload_appl,ApplId,ApplVsn,Node},infinity).
+
+%%---------------------------------------------------------------
+%% Function: create_vm()
+%% @doc: creates a slave and dir to load appl         
+%% @param: non
+%% @returns:{ok,Node}|{error,Reason}
+%%
+%%---------------------------------------------------------------
+-spec create_vm()->  {ok,node()}|{error,term()}.
+create_vm()->
+    gen_server:call(?SERVER, {create_vm},infinity).
+%%---------------------------------------------------------------
+%% Function: delete_vm(Node)
+%% @doc: stops the slave and deletes related dir         
+%% @param: non
+%% @returns:ok|{error,Reason}
+%%
+%%---------------------------------------------------------------
+-spec delete_vm(node())-> ok|{error,term()}.
+delete_vm(Node)->
+    gen_server:call(?SERVER, {delete_vm,Node},infinity).
+
 %%---------------------------------------------------------------
 %% Function: get_spec(Name,Vsn)
 %% @doc: retreive Service info        
@@ -108,6 +163,17 @@ load_read_specs()->
 %% Support functions
 %% ====================================================================
 %%---------------------------------------------------------------
+%% Function:all_specs()
+%% @doc: all service specs infromation       
+%% @param: non 
+%% @returns:State#state.service_specs_info
+%%
+%%---------------------------------------------------------------
+-spec all_specs()-> [term()].
+all_specs()->
+    gen_server:call(?SERVER, {all_specs},infinity).
+
+%%---------------------------------------------------------------
 %% Function:read_state()
 %% @doc: read theServer State variable      
 %% @param: non 
@@ -138,9 +204,9 @@ ping()->
 %%          {stop, Reason}
 %% --------------------------------------------------------------------
 init([]) ->
-  
-
-    {ok, #state{ service_specs_info=[]}
+    Info=lib_appl:service_specs_info(),
+    {ok, #state{ vm_list=[],
+		 service_specs_info=Info}
     }.
 
 %% --------------------------------------------------------------------
@@ -155,17 +221,101 @@ init([]) ->
 %% --------------------------------------------------------------------
 
 
+handle_call({create_vm},_From, State) ->
+    Reply=case lib_vm:create() of
+	      {ok,Vm}->
+		  case rpc:call(Vm,code,add_patha,["ebin"],5000) of
+		      {error,bad_directory}->
+			  rpc:call(Vm,init,stop,[],5000),
+			  NewState=State,
+			  {error,bad_directory};
+		      true->
+			  case rpc:call(Vm,application,start,[service_app],5000) of
+			      ok->
+				  NewState=State#state{vm_list=[Vm|State#state.vm_list]},
+				  {ok,Vm};
+			      {error,Reason}->
+				  rpc:call(Vm,init,stop,[],5000),
+				  NewState=State,
+				  {error,Reason}
+			  end
+		  end
+	  end,
+    {reply, Reply, NewState};
+
+handle_call({delete_vm,Vm},_From, State) ->
+    Reply=case lib_vm:delete(Vm) of
+	      ok->
+		  NewState=State#state{vm_list=lists:delete(Vm,State#state.vm_list)},
+		  ok;
+	      {error,Reason}->
+		  NewState=State,
+		  {error,Reason}
+	  end,
+    {reply, Reply, NewState};
+
+
+handle_call({load_start_appl,ApplId,ApplVsn,Node},_From, State) ->
+    Reply=case lists:member(Node,State#state.vm_list) of
+	      false->
+		  {error,[eexists,Node]};
+	      true->
+		  case lists:keyfind({ApplId,ApplVsn},1,State#state.service_specs_info) of
+		      false->
+			  {error,[eexists,ApplId,ApplVsn]};
+		      {{ApplId,ApplVsn},GitPath}->
+			  case rpc:call(Node,service,load,[ApplId,ApplVsn,GitPath],5000) of
+			      {error,Reason}->
+				  {error,Reason};
+			      ok ->
+				 rpc:call(Node,service,start,[ApplId,ApplVsn],5000) 
+			  end	
+		  end	  
+	  end,
+    {reply, Reply, State};
+
+handle_call({load_start_appl,ApplId,ApplVsn,Node},_From, State) ->
+    Reply=case lists:member(Node,State#state.vm_list) of
+	      false->
+		  {error,[eexists,Node]};
+	      true->
+		  case lists:keyfind({ApplId,ApplVsn},1,State#state.service_specs_info) of
+		      false->
+			  {error,[eexists,ApplId,ApplVsn]};
+		      {{ApplId,ApplVsn},GitPath}->
+			  case rpc:call(Node,service,load,[ApplId,ApplVsn,GitPath],5000) of
+			      {error,Reason}->
+				  {error,Reason};
+			      ok ->
+				 rpc:call(Node,service,start,[ApplId,ApplVsn],5000) 
+			  end	
+		  end	  
+	  end,
+    {reply, Reply, State};
+
+handle_call({stop_unload_appl,ApplId,ApplVsn,Node},_From, State) ->
+    Reply=case lists:member(Node,State#state.vm_list) of
+	      false->
+		  {error,[eexists,Node]};
+	      true->
+		  case rpc:call(Node,service,stop,[ApplId,ApplVsn],5000) of
+		      {error,Reason}->
+			  {error,Reason};
+		      ok ->
+			  rpc:call(Node,service,unload,[ApplId,ApplVsn],5000) 
+		  end	
+	  end,
+    {reply, Reply, State};
+
+
+handle_call({all_specs},_From, State) ->
+    Reply=State#state.service_specs_info,
+    {reply, Reply, State};
+
 handle_call({get_spec,Name,Vsn},_From, State) ->
-    Reply=lib_controller:get_spec(Name,Vsn,State#state.service_specs_info),
+    Reply=lib_appl:get_spec(Name,Vsn,State#state.service_specs_info),
     {reply, Reply, State};
 
-handle_call({actual_state},_From, State) ->
-    Reply=lib_controller:actual_state(State#state.service_specs_info),
-    {reply, Reply, State};
-
-handle_call({read_state},_From, State) ->
-    Reply=State,
-    {reply, Reply, State};
 handle_call({ping},_From, State) ->
     Reply=pong,
     {reply, Reply, State};
@@ -198,7 +348,7 @@ handle_call(Request, From, State) ->
 %% --------------------------------------------------------------------
 
 
-handle_cast(Msg, State) ->
+handle_cast(_Msg, State) ->
   %  rpc:cast(node(),log,log,[?Log_ticket("unmatched cast",[Msg])]),
     {noreply, State}.
 
@@ -209,7 +359,7 @@ handle_cast(Msg, State) ->
 %%          {noreply, State, Timeout} |
 %%          {stop, Reason, State}            (terminate/2 is called)
 %% --------------------------------------------------------------------
-handle_info(Info, State) ->
+handle_info(_Info, State) ->
     %rpc:cast(node(),log,log,[?Log_ticket("unmatched info",[Info])]),
     {noreply, State}.
 

@@ -1,5 +1,5 @@
 all:
-	rm -rf  *~ */*~  src/*.beam test/*.beam erl_cra*;
+	rm -rf  *~ */*~ apps/controller_app/src/*.beam test/*.beam erl_cra*;
 	rm -rf  catalog host_specs deployment_specs logs *.service_dir;
 	rm -rf _build test_ebin ebin;		
 	mkdir ebin;		
@@ -11,7 +11,7 @@ check:
 	rebar3 check
 
 eunit:
-	rm -rf  *~ */*~ src/*.beam test/*.beam test_ebin erl_cra*;
+	rm -rf  *~ */*~ apps/controller_app/src/*.beam test/*.beam test_ebin erl_cra*;
 	rm -rf _build logs *.service_dir;
 	rm -rf  catalog host_specs deployment_specs;
 	rm -rf ebin;

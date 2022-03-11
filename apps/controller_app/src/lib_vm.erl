@@ -60,11 +60,11 @@ create(NodeName)->
 %% --------------------------------------------------------------------
 % NodeDir=filename:join(NodeName++".pod"),
 create(HostName,NodeName,Cookie,PaArgs,EnvArgs)->
-    io:format("HostName ~p~n",[HostName]),
-    io:format("NodeName ~p~n",[NodeName]),
-    io:format("PaArgs ~p~n",[PaArgs]),
-    io:format("Cookie ~p~n",[Cookie]),
-    io:format("EnvArgs ~p~n",[EnvArgs]),
+  %  io:format("HostName ~p~n",[HostName]),
+  %  io:format("NodeName ~p~n",[NodeName]),
+  %  io:format("PaArgs ~p~n",[PaArgs]),
+  %  io:format("Cookie ~p~n",[Cookie]),
+  %  io:format("EnvArgs ~p~n",[EnvArgs]),
     
     Args=PaArgs++" "++"-setcookie "++Cookie++" "++EnvArgs,
     Result=case slave:start(HostName,NodeName,Args) of

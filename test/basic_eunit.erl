@@ -35,8 +35,19 @@ start()->
     ok.
 
 
-
 t1_test()->
+    [{{"divi_app","1.0.0"},"https://github.com/joq62/divi_app.git"}]=controller:all_specs(),
+    {ok,Vm1}=controller:create_vm(),
+ %   pong=rpc:call(Vm1,sd,all,[],5000),
+    ok=controller:load_start_appl("divi_app","1.0.0",Vm1),
+    42.0=rpc:call(Vm1,mydivi,divi,[420,10],5000),
+    ok=controller:stop_unload_appl("divi_app","1.0.0",Vm1),
+    {badrpc,_}=rpc:call(Vm1,mydivi,divi,[420,10],5000),
+    pong=rpc:call(Vm1,service,ping,[],5000),
+    ok=controller:delete_vm(Vm1),
+    {badrpc,nodedown}=rpc:call(Vm1,service,ping,[],5000),
+    ok.
+txx1_test()->
     
     AllDeploymentInfo=config:all_info(),
     ToDeploy=[{ApplId,ApplVsn}||{DeplId,DeplVsn,ApplId,ApplVsn,[all]}<-AllDeploymentInfo],
@@ -47,7 +58,7 @@ t1_test()->
     {ok,ServiceVm}=lib_vm:create(),
     true=rpc:call(ServiceVm,code,add_patha,["ebin"],5000),
     ok=rpc:call(ServiceVm,application,start,[service_app],5000),
-    pong=rpc:call(ServiceVm,service,ping,[],5000),
+    {badrpc,nodedown}=rpc:call(ServiceVm,service,ping,[],5000),
     
     StartR=[load_start_appl(ApplId,Vsn,Git,ServiceVm)||{ApplId,Vsn,Git}<-ToLoadStart2],
     io:format("StartR ~p~n",[StartR]),
