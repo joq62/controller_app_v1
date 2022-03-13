@@ -15,6 +15,7 @@ eunit:
 	rm -rf _build logs *.service_dir;
 	rm -rf  catalog host_specs deployment_specs;
 	rm -rf ebin;
+	rm -f rebar.lock;
 	mkdir test_ebin;
 	mkdir ebin;
 	rebar3 compile;

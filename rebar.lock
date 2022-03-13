@@ -11,10 +11,10 @@
        {ref,"583be0206fde78244d1658c9bf28e92a1637f9eb"}},
   0},
  {<<"sd_lib">>,
-  {git,"git://github.com/joq62/sd_lib.git",
-       {ref,"5b730c638a5cd5ad54e210162214fb889d33fd12"}},
+  {git,"git://github.com/joq62/sd_app.git",
+       {ref,"371a53fcd894a6e7026fa3d50d70f4f52587be3f"}},
   0},
  {<<"service_app">>,
   {git,"git://github.com/joq62/service_app.git",
-       {ref,"ea9bc7c621db24eab86b6fe3c9e765290543fd3e"}},
+       {ref,"6b284d19595508d7696d69d7a1cdfce5cce0e61c"}},
   0}].

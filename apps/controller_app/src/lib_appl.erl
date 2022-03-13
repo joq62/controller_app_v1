@@ -45,7 +45,8 @@ service_specs_info()->
 
 deploy_info([],DeployInfo)->
     DeployInfo;
-deploy_info([{_DeplId,_DeplVsn,ApplId,ApplVsn,[all]}|T],Acc)->
+deploy_info([{DeplId,DeplVsn,ApplId,ApplVsn,[all]}|T],Acc)->
+    io:format(" ~p~n",[{{DeplId,DeplVsn,ApplId,ApplVsn,[all]},?MODULE,?LINE}]),
     NewAcc=case config:find(ApplId,ApplVsn) of
 	       false->
 		   Acc;

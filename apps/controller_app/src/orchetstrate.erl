@@ -7,10 +7,10 @@
 %%% 
 %%% Created : 10 dec 2012
 %%% -------------------------------------------------------------------
--module(controller). 
+-module(orchetstrate). 
 
 -behaviour(gen_server). 
-
+ 
 %% --------------------------------------------------------------------
 %% Include files
 %% --------------------------------------------------------------------
@@ -205,7 +205,6 @@ ping()->
 %% --------------------------------------------------------------------
 init([]) ->
     Info=lib_appl:service_specs_info(),
-    io:format(" Info ~p~n",[{Info,?MODULE,?LINE}]),
     {ok, #state{ vm_list=[],
 		 service_specs_info=Info}
     }.
