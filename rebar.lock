@@ -10,7 +10,7 @@
   {git,"git://github.com/joq62/log_app.git",
        {ref,"583be0206fde78244d1658c9bf28e92a1637f9eb"}},
   0},
- {<<"sd_lib">>,
+ {<<"sd_app">>,
   {git,"git://github.com/joq62/sd_app.git",
        {ref,"371a53fcd894a6e7026fa3d50d70f4f52587be3f"}},
   0},

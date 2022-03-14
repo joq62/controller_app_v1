@@ -204,6 +204,9 @@ ping()->
 %%          {stop, Reason}
 %% --------------------------------------------------------------------
 init([]) ->
+    io:format("sd_app ~p~n",[application:start(sd_app)]),
+    io:format("config ~p~n",[application:start(config_app)]),
+    io:format("log ~p~n",[application:start(log_app)]),
     Info=lib_appl:service_specs_info(),
     io:format(" Info ~p~n",[{Info,?MODULE,?LINE}]),
     {ok, #state{ vm_list=[],

@@ -24,6 +24,8 @@
 %% --------------------------------------------------------------------
 start()->
     ok=application:start(controller_app),
+    timer:sleep(5000),
+    io:format("AllApplications ~p~n",[application:which_applications()]),
     
     ok=t1_test(),
    % ok=t2_test(),
@@ -31,7 +33,7 @@ start()->
    % ok=t22_test(),
 %   ok=test3(),
  %   ok=test4(),
-    init:stop(),
+%    init:stop(),
     ok.
 
 
