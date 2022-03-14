@@ -30,4 +30,6 @@
 %% Returns: non
 %% --------------------------------------------------------------------
 start()->
+    os:cmd("rm -rf controller *.service_dir"),
+    os:cmd("git clone https://github.com/joq62/controller_app.git"),
     application:start(controller_app).
