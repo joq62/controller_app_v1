@@ -30,7 +30,9 @@ init([]) ->
                  intensity => 0,
                  period => 1},
     ChildSpecs = [#{id=>controller,
-                    start=>{controller,start,[]}}],
+                    start=>{controller,start,[]}},
+		  #{id=>orchestrate,
+                    start=>{orchestrate,start,[]}}],
     {ok, {SupFlags, ChildSpecs}}.
 
 %% internal functions

@@ -48,12 +48,13 @@ t1_test()->
    % pong=rpc:call(Vm1,sd,all,[],5000),
     ok=controller:load_start_appl("divi_app","1.0.0",Vm1),
     
-    [Vm1]=sd:get_host(divi_app,"c100"),
+    [_,Vm1]=sd:get_host(divi_app,"c100"),
+  %  [Vm1]=sd:get(divi_app),
     []=sd:get_host(divi_app,"c200"),
 
     
     ok=controller:load_start_appl("sd_app","1.0.0",Vm1),
-    [Vm1]=rpc:call(Vm1,sd,get,[divi_app],2000),
+    [Vm1,_Vm2]=rpc:call(Vm1,sd,get,[divi_app],2000),
 %    []=rpc:call(Vm1,sd,get_host,[divi_app,node()],2000),
 %    [Vm1]=rpc:call(Vm1,sd,get_host,[divi_app,Vm1],2000),
 

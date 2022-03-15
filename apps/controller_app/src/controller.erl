@@ -258,35 +258,16 @@ handle_call({delete_vm,Vm},_From, State) ->
 	  end,
     {reply, Reply, NewState};
 
-
 handle_call({load_start_appl,ApplId,ApplVsn,Node},_From, State) ->
     Reply=case lists:member(Node,State#state.vm_list) of
 	      false->
 		  {error,[eexists,Node]};
 	      true->
-		  case lists:keyfind({ApplId,ApplVsn},1,State#state.service_specs_info) of
+		 % case lists:keyfind({ApplId,ApplVsn},1,State#state.service_specs_info) of
+		  case config:find(ApplId,ApplVsn) of
 		      false->
 			  {error,[eexists,ApplId,ApplVsn]};
-		      {{ApplId,ApplVsn},GitPath}->
-			  case rpc:call(Node,service,load,[ApplId,ApplVsn,GitPath],5000) of
-			      {error,Reason}->
-				  {error,Reason};
-			      ok ->
-				 rpc:call(Node,service,start,[ApplId,ApplVsn],5000) 
-			  end	
-		  end	  
-	  end,
-    {reply, Reply, State};
-
-handle_call({load_start_appl,ApplId,ApplVsn,Node},_From, State) ->
-    Reply=case lists:member(Node,State#state.vm_list) of
-	      false->
-		  {error,[eexists,Node]};
-	      true->
-		  case lists:keyfind({ApplId,ApplVsn},1,State#state.service_specs_info) of
-		      false->
-			  {error,[eexists,ApplId,ApplVsn]};
-		      {{ApplId,ApplVsn},GitPath}->
+		      {ApplId,_VsnList,GitPath}->
 			  case rpc:call(Node,service,load,[ApplId,ApplVsn,GitPath],5000) of
 			      {error,Reason}->
 				  {error,Reason};

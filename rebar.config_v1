@@ -1,15 +1,17 @@
 {erl_opts, [debug_info]}.
-{deps, [{sd_app,{git,"https://github.com/joq62/sd_app.git", {branch,"main"}}},
-        {service_app,{git,"https://github.com/joq62/service_app.git", {branch,"main"}}},
-        {log_app,{git,"https://github.com/joq62/log_app.git", {branch,"main"}}},
-	{config_app,{git,"https://github.com/joq62/config_app.git", {branch,"main"}}},
-        {flatlog,{git,"https://github.com/ferd/flatlog.git", {tag,"v0.1.2"}}}]}.
+{deps, [{sd_app,{git,"git://github.com/joq62/sd_app.git", {branch,"main"}}},
+        {service_app,{git,"git://github.com/joq62/service_app.git", {branch,"main"}}},
+        {log_app,{git,"git://github.com/joq62/log_app.git", {branch,"main"}}},
+	{config_app,{git,"git://github.com/joq62/config_app.git", {branch,"main"}}},
+        {flatlog,{git,"git://github.com/ferd/flatlog.git", {tag,"v0.1.2"}}}]}.
 
 {dist_node,[{setcookie, test_cookie},
 	    {sname,test}]}.
 {relx, [{release, {controller_app, "0.1.0"},
          [controller_app,
-	  sasl]},
+          log_app,
+          config_app,
+          sasl]},
 
         {sys_config, "./config/sys.config"},
         {vm_args, "./config/vm.args"},
