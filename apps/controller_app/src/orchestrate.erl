@@ -18,7 +18,7 @@
 
 %% --------------------------------------------------------------------
 -define(SERVER,?MODULE).
--define(Interval,60*1000).
+-define(Interval,20*1000).
 
 %% External exports
 -export([
@@ -182,19 +182,24 @@ code_change(_OldVsn, State, _Extra) ->
 %{{AppId,ApplVsn},GitPath}
 
 local_loop()->
-    io:format("nodes() ~p~n",[nodes()]),
-    io:format("sd:all() ~p~n",[sd:all()]),
+%    io:format("nodes() ~p~n",[nodes()]),
+%    io:format("sd:all() ~p~n",[sd:all()]),
 
-    {ok,WantedHost}=inet:gethostname(),
-    ServiceSpecsInfo=lib_appl:service_specs_info(),
-    AppsToStart=[{ApplId,ApplVsn}||{{ApplId,ApplVsn},_GitPath}<-ServiceSpecsInfo,
-					    []=:=sd:get_host(list_to_atom(ApplId),WantedHost)],
-    io:format("AppsToStart ~p~n",[AppsToStart]),
-    
-    StartR=[{{ApplId,ApplVsn},load_start(ApplId,ApplVsn)}||{ApplId,ApplVsn}<-AppsToStart],
-    io:format("StartR ~p~n",[StartR]),
-    
     timer:sleep(?Interval),
+    {ok,WantedHost}=inet:gethostname(),
+    case rpc:call(node(),lib_appl,service_specs_info,[],10*1000) of
+	{badrpc,_}->
+	    ok;
+	ServiceSpecsInfo->
+	    AppsToStart=[{ApplId,ApplVsn}||{{ApplId,ApplVsn},_GitPath}<-ServiceSpecsInfo,
+					   []=:=sd:get_host(list_to_atom(ApplId),WantedHost)],
+	    io:format("AppsToStart ~p~n",[AppsToStart]),    
+	    StartR=[{{ApplId,ApplVsn},load_start(ApplId,ApplVsn)}||{ApplId,ApplVsn}<-AppsToStart],
+	    io:format("StartR ~p~n",[StartR])
+    end,
+   
+    
+
     rpc:cast(node(),?MODULE,loop,[]).
 		  
 
