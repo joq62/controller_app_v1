@@ -18,8 +18,7 @@
 
 %% --------------------------------------------------------------------
 -define(SERVER,?MODULE).
-
-
+-define(ControllerEbin,"controller_app/ebin").
 %% External exports
 -export([
 	 all_specs/0,
@@ -228,12 +227,12 @@ init([]) ->
 handle_call({create_vm},_From, State) ->
     Reply=case lib_vm:create() of
 	      {ok,Vm}->
-		  case rpc:call(Vm,code,add_patha,["ebin"],5000) of
-		      {error,bad_directory}->
+		  case {rpc:call(Vm,code,add_patha,["ebin"],5000),rpc:call(Vm,code,add_patha,[?ControllerEbin],5000)} of
+		      {{error,_},{error,_}}->
 			  rpc:call(Vm,init,stop,[],5000),
 			  NewState=State,
 			  {error,bad_directory};
-		      true->
+		      _->
 			  case rpc:call(Vm,application,start,[service_app],5000) of
 			      ok->
 				  NewState=State#state{vm_list=[Vm|State#state.vm_list]},
