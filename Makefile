@@ -25,4 +25,4 @@ eunit:
 release:
 	rm -rf  *~ */*~  test_ebin/* erl_cra*;
 	erlc -o test_ebin test/*.erl;
-	erl -pa test_ebin -run release start config_app ../catalog/catalog.specs
+	erl -pa test_ebin -run release start controller_app ../catalog/catalog.specs

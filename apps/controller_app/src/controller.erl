@@ -267,11 +267,11 @@ handle_call({load_start_appl,ApplId,ApplVsn,Node},_From, State) ->
 		      false->
 			  {error,[eexists,ApplId,ApplVsn]};
 		      {ApplId,_VsnList,GitPath}->
-			  case rpc:call(Node,service,load,[ApplId,ApplVsn,GitPath],5000) of
+			  case rpc:call(Node,service,load,[ApplId,ApplVsn,GitPath],20*5000) of
 			      {error,Reason}->
 				  {error,Reason};
 			      ok ->
-				 rpc:call(Node,service,start,[ApplId,ApplVsn],5000) 
+				 rpc:call(Node,service,start,[ApplId,ApplVsn],20*5000) 
 			  end	
 		  end	  
 	  end,
