@@ -7,7 +7,7 @@
 %%% 
 %%% Created : 10 dec 2012
 %%% -------------------------------------------------------------------
--module(controller). 
+-module(service). 
 
 -behaviour(gen_server). 
 
@@ -15,22 +15,20 @@
 %% Include files
 %% --------------------------------------------------------------------
 
-
 %% --------------------------------------------------------------------
 -define(SERVER,?MODULE).
--define(ControllerEbin,"controller_app/ebin").
+
+
 %% External exports
 -export([
-	 all_specs/0,
-	 create_vm/0,
-	 load_start_appl/3,
-	 stop_unload_appl/3,
-	 delete_vm/1,
+	 load/3,
+	 start/2,
+	 stop/2,
+	 unload/2,
 	 
-	 get_spec/2,
-	 actual_state/0,
-	 load_read_specs/0,
-	
+	 id/0,
+	 template/0,
+
 	 read_state/0,
 	 ping/0
 	]).
@@ -45,8 +43,12 @@
 -export([init/1, handle_call/3,handle_cast/2, handle_info/2, terminate/2, code_change/3]).
 
 -record(state, {
-		vm_list,
-		service_specs_info
+		loaded,
+		started,
+		service_dir,
+		id,
+		template
+		
 	       }).
 
 %% ====================================================================
@@ -65,86 +67,62 @@ stop()-> gen_server:call(?SERVER, {stop},infinity).
 %% ====================================================================
 %% Application handling
 %% ====================================================================
-%  create_vm/0,
-%  load_start_appl/3,
-%  stop_unload_appl/2,
-%  delete_vm/1,
 
 %%---------------------------------------------------------------
-%% Function: load_start_appl(ApplId,ApplVsn,Node)
-%% @doc: loads and starts App ApplId,ApplVsn on slave Node         
-%% @param: ApplId,ApplVsn,Node
+%% Function:load(AppId,Vsn,GitPath)
+%% @doc:git clone AppId    
+%% @param: AppId,Vsn,GitPath
 %% @returns:ok|{error,Reason}
 %%
 %%---------------------------------------------------------------
--spec load_start_appl(string(),string(),node())-> ok|{error,term()}.
-load_start_appl(ApplId,ApplVsn,Node)->
-    gen_server:call(?SERVER, {load_start_appl,ApplId,ApplVsn,Node},infinity).
+-spec load(string(),string(),string())-> atom()|{string(),string()}.
+load(AppId,Vsn,GitPath)->
+    gen_server:call(?SERVER,{load,AppId,Vsn,GitPath},infinity).
 
 %%---------------------------------------------------------------
-%% Function: stop_unload_appl(ApplId,ApplVsn,Node)
-%% @doc: stopps and unloads  App ApplId,ApplVsn on slave Node         
-%% @param: ApplId,ApplVsn,Node
+%% Function:start(AppId,Vsn)
+%% @doc:start loaded application    
+%% @param: AppId,Vsn
 %% @returns:ok|{error,Reason}
 %%
 %%---------------------------------------------------------------
--spec stop_unload_appl(string(),string(),node())-> ok|{error,term()}.
-stop_unload_appl(ApplId,ApplVsn,Node)->
-    gen_server:call(?SERVER, {stop_unload_appl,ApplId,ApplVsn,Node},infinity).
+-spec start(string(),string())-> atom()|{string(),string()}.
+start(AppId,Vsn)->
+    gen_server:call(?SERVER,{start,AppId,Vsn},infinity).
 
 %%---------------------------------------------------------------
-%% Function: create_vm()
-%% @doc: creates a slave and dir to load appl         
-%% @param: non
-%% @returns:{ok,Node}|{error,Reason}
-%%
-%%---------------------------------------------------------------
--spec create_vm()->  {ok,node()}|{error,term()}.
-create_vm()->
-    gen_server:call(?SERVER, {create_vm},infinity).
-%%---------------------------------------------------------------
-%% Function: delete_vm(Node)
-%% @doc: stops the slave and deletes related dir         
-%% @param: non
+%% Function:stop(AppId,Vsn)
+%% @doc:start loaded application    
+%% @param: AppId,Vsn
 %% @returns:ok|{error,Reason}
 %%
 %%---------------------------------------------------------------
--spec delete_vm(node())-> ok|{error,term()}.
-delete_vm(Node)->
-    gen_server:call(?SERVER, {delete_vm,Node},infinity).
+-spec stop(string(),string())-> atom()|{string(),string()}.
+stop(AppId,Vsn)->
+    gen_server:call(?SERVER,{stop,AppId,Vsn},infinity).
 
 %%---------------------------------------------------------------
-%% Function: get_spec(Name,Vsn)
-%% @doc: retreive Service info        
-%% @param: Name,Vsn
-%% @returns:[SeviceSpecInfo]|{error,eexists}
+%% Function:unload(AppId,Vsn)
+%% @doc:start loaded application    
+%% @param: AppId,Vsn
+%% @returns:ok|{error,Reason}
 %%
 %%---------------------------------------------------------------
--spec get_spec(string(),string())->  [term()]|{atom(),list()}.
-get_spec(Name,Vsn)->
-    gen_server:call(?SERVER, {get_spec,Name,Vsn},infinity).
+-spec unload(string(),string())-> atom()|{string(),string()}.
+unload(AppId,Vsn)->
+    gen_server:call(?SERVER,{unload,AppId,Vsn},infinity).
+
 
 %%---------------------------------------------------------------
-%% Function: actual_state()
-%% @doc: evaluta Id and Vms to start and delete        
+%% Function:id()
+%% @doc: service id == service spec        
 %% @param: non
-%% @returns:[{Id,ToStart,ToDelete}]
+%% @returns:{Name,Vsn}
 %%
 %%---------------------------------------------------------------
--spec actual_state()-> [term()].
-actual_state()->
-    gen_server:call(?SERVER, {actual_state},infinity).
-
-%%---------------------------------------------------------------
-%% Function: load_read_specs()
-%% @doc: git load and read service_specs files        
-%% @param: non
-%% @returns:[ServiceSpecsInfo]|{error,Reason}
-%%
-%%---------------------------------------------------------------
--spec load_read_specs()-> [term()]|{atom(),term()}.
-load_read_specs()->
-    gen_server:call(?SERVER, {load_read_specs},infinity).
+-spec id()-> {string(),string()}.
+id()->
+    gen_server:call(?SERVER, {id},infinity).
 
 %%---------------------------------------------------------------
 %% Function:template()
@@ -153,25 +131,14 @@ load_read_specs()->
 %% @returns:[{app,vsn}]
 %%
 %%---------------------------------------------------------------
-%-spec template()-> [{atom(),string()}].
-%template()->
- %   gen_server:call(?SERVER, {template},infinity).
+-spec template()-> [{atom(),string()}].
+template()->
+    gen_server:call(?SERVER, {template},infinity).
 
 
 %% ====================================================================
 %% Support functions
 %% ====================================================================
-%%---------------------------------------------------------------
-%% Function:all_specs()
-%% @doc: all service specs infromation       
-%% @param: non 
-%% @returns:State#state.service_specs_info
-%%
-%%---------------------------------------------------------------
--spec all_specs()-> [term()].
-all_specs()->
-    gen_server:call(?SERVER, {all_specs},infinity).
-
 %%---------------------------------------------------------------
 %% Function:read_state()
 %% @doc: read theServer State variable      
@@ -203,13 +170,13 @@ ping()->
 %%          {stop, Reason}
 %% --------------------------------------------------------------------
 init([]) ->
-    io:format("sd_app ~p~n",[application:start(sd_app)]),
-    io:format("config ~p~n",[application:start(config_app)]),
-    io:format("log ~p~n",[application:start(log_app)]),
-    Info=lib_appl:service_specs_info(),
-    io:format(" Info ~p~n",[{Info,?MODULE,?LINE}]),
-    {ok, #state{ vm_list=[],
-		 service_specs_info=Info}
+    {ok,HostName}=net:gethostname(),
+    ServiceDir=HostName++".service_dir",  
+    os:cmd("rm -rf "++ServiceDir),
+    ok=file:make_dir(ServiceDir),
+    {ok, #state{service_dir=ServiceDir,
+		loaded=[],
+		started=[]}
     }.
 
 %% --------------------------------------------------------------------
@@ -223,84 +190,82 @@ init([]) ->
 %%          {stop, Reason, State}            (terminate/2 is called)
 %% --------------------------------------------------------------------
 
-
-handle_call({create_vm},_From, State) ->
-    Reply=case lib_vm:create() of
-	      {ok,Vm}->
-		  case {rpc:call(Vm,code,add_patha,["ebin"],5000),rpc:call(Vm,code,add_patha,[?ControllerEbin],5000)} of
-		      {{error,_},{error,_}}->
-			  rpc:call(Vm,init,stop,[],5000),
-			  NewState=State,
-			  {error,bad_directory};
-		      _->
-			  case rpc:call(Vm,application,start,[service_app],5000) of
-			      ok->
-				  NewState=State#state{vm_list=[Vm|State#state.vm_list]},
-				  {ok,Vm};
-			      {error,Reason}->
-				  rpc:call(Vm,init,stop,[],5000),
-				  NewState=State,
-				  {error,Reason}
-			  end
-			 
-		  end
-	  end,
-    {reply, Reply, NewState};
-
-handle_call({delete_vm,Vm},_From, State) ->
-    Reply=case lib_vm:delete(Vm) of
+handle_call({start,AppId,Vsn},_From, State) ->
+    Reply=case lib_service:start(AppId,Vsn) of
 	      ok->
-		  NewState=State#state{vm_list=lists:delete(Vm,State#state.vm_list)},
+		  NewState=State#state{started=[{AppId,Vsn}|State#state.started]},	  
 		  ok;
-	      {error,Reason}->
+	      Err->
 		  NewState=State,
-		  {error,Reason}
+		  {error,[Err]}
 	  end,
     {reply, Reply, NewState};
 
-handle_call({load_start_appl,ApplId,ApplVsn,Node},_From, State) ->
-    Reply=case lists:member(Node,State#state.vm_list) of
-	      false->
-		  {error,[eexists,Node]};
+handle_call({stop,AppId,Vsn},_From, State) ->
+    Reply=case lists:member({AppId,Vsn},State#state.started) of
 	      true->
-		 % case lists:keyfind({ApplId,ApplVsn},1,State#state.service_specs_info) of
-		  case config:find(ApplId,ApplVsn) of
-		      false->
-			  {error,[eexists,ApplId,ApplVsn]};
-		      {ApplId,_VsnList,GitPath}->
-			  case rpc:call(Node,service,load,[ApplId,ApplVsn,GitPath],20*5000) of
-			      {error,Reason}->
-				  {error,Reason};
-			      ok ->
-				 rpc:call(Node,service,start,[ApplId,ApplVsn],20*5000) 
-			  end	
-		  end	  
-	  end,
-    {reply, Reply, State};
-
-handle_call({stop_unload_appl,ApplId,ApplVsn,Node},_From, State) ->
-    Reply=case lists:member(Node,State#state.vm_list) of
-	      false->
-		  {error,[eexists,Node]};
-	      true->
-		  case rpc:call(Node,service,stop,[ApplId,ApplVsn],5000) of
+		  case lib_service:stop(AppId,Vsn) of
+		      ok->
+			  NewState=State#state{started=lists:delete({AppId,Vsn},State#state.started)},
+			  ok;
 		      {error,Reason}->
-			  {error,Reason};
-		      ok ->
-			  rpc:call(Node,service,unload,[ApplId,ApplVsn],5000) 
-		  end	
+			  NewState=State,
+			   {error,Reason}
+		  end;
+	      false->
+		  NewState=State,
+		  {error,[not_started]}
 	  end,
+    {reply, Reply, NewState};
+
+
+handle_call({load,AppId,Vsn,GitPath},_From, State) ->
+    Reply=case lists:keymember({AppId,Vsn},1,State#state.loaded) of
+	       false->
+		   case lib_service:load(AppId,Vsn,GitPath,State#state.service_dir) of
+		       {ok,AppDir}->
+			   NewState=State#state{loaded=[{{AppId,Vsn},GitPath,AppDir}|State#state.loaded]},
+			   ok;
+		       {error,Reason}->
+			   NewState=State,
+			   {error,Reason}
+		   end;
+	       true->
+		   NewState=State,
+		   {error,[already_loaded]}
+	   end,
+    {reply, Reply, NewState};
+
+
+handle_call({unload,AppId,Vsn},_From, State) ->
+    Reply=case lists:keyfind({AppId,Vsn},1,State#state.loaded) of
+	      {{AppId,Vsn},_GitPath,AppDir}->
+		  case lib_service:unload(AppId,Vsn,AppDir) of
+		      ok->
+			  NewState=State#state{loaded=lists:keydelete({AppId,Vsn},1,State#state.loaded)},
+			  ok;
+		       {error,Reason}->
+			   NewState=State,
+			   {error,Reason}
+		   end;
+	       true->
+		   NewState=State,
+		   {error,[already_loaded]}
+	   end,
+    {reply, Reply, NewState};
+
+
+handle_call({id},_From, State) ->
+    Reply=State#state.id,
     {reply, Reply, State};
 
-
-handle_call({all_specs},_From, State) ->
-    Reply=State#state.service_specs_info,
+handle_call({template},_From, State) ->
+    Reply=State#state.template,
     {reply, Reply, State};
 
-handle_call({get_spec,Name,Vsn},_From, State) ->
-    Reply=lib_appl:get_spec(Name,Vsn,State#state.service_specs_info),
+handle_call({read_state},_From, State) ->
+    Reply=State,
     {reply, Reply, State};
-
 handle_call({ping},_From, State) ->
     Reply=pong,
     {reply, Reply, State};
@@ -310,11 +275,15 @@ handle_call({stopped},_From, State) ->
     {reply, Reply, State};
 
 
+
+
 handle_call({not_implemented},_From, State) ->
     Reply=not_implemented,
     {reply, Reply, State};
 
 handle_call({stop}, _From, State) ->
+    os:cmd("rm -rf "++State#state.service_dir),
+    timer:sleep(3000),
     {stop, normal, shutdown_ok, State};
 
 handle_call(Request, From, State) ->
@@ -332,7 +301,7 @@ handle_call(Request, From, State) ->
 
 
 handle_cast(_Msg, State) ->
-  %  rpc:cast(node(),log,log,[?Log_ticket("unmatched cast",[Msg])]),
+    %rpc:cast(node(),log,log,[?Log_ticket("unmatched cast",[Msg])]),
     {noreply, State}.
 
 %% --------------------------------------------------------------------

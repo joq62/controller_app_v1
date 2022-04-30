@@ -15,13 +15,12 @@ eunit:
 	rm -rf _build logs *.service_dir;
 	rm -rf  catalog host_specs deployment_specs;
 	rm -rf ebin;
-	rm -f rebar.lock;
 	mkdir test_ebin;
 	mkdir ebin;
 	rebar3 compile;
 	cp _build/default/lib/*/ebin/* ebin;
 	erlc -o test_ebin test/*.erl;
-	erl -pa ebin -pa test_ebin -sname test -run basic_eunit start -setcookie test_cookie -config config/sys
+	erl -pa ebin -pa test_ebin -sname controller -run basic_eunit start -setcookie test_cookie -config config/sys
 release:
 	rm -rf  *~ */*~  test_ebin/* erl_cra*;
 	erlc -o test_ebin test/*.erl;

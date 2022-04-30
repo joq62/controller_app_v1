@@ -24,6 +24,8 @@
 %% --------------------------------------------------------------------
 start()->
     ok=application:start(controller_app),
+    pong=service:ping(),
+    pong=orchestrate:ping(),
     timer:sleep(5000),
     io:format("AllApplications ~p~n",[application:which_applications()]),
     

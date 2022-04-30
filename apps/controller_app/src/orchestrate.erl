@@ -77,7 +77,7 @@ loop()->
 %% @param: non
 %% @returns:{pong,node,module}|{badrpc,Reason}
 %%
--spec ping()-> {atom(),node(),module()}|{atom(),term()}.
+-spec ping()-> pong.
 ping()-> 
     gen_server:call(?SERVER, {ping},infinity).
 
@@ -191,11 +191,12 @@ local_loop()->
 	{badrpc,_}->
 	    ok;
 	ServiceSpecsInfo->
+	    io:format("ServiceSpecsInfo ~p~n",[{?MODULE,?LINE,ServiceSpecsInfo}]),    
 	    AppsToStart=[{ApplId,ApplVsn}||{{ApplId,ApplVsn},_GitPath}<-ServiceSpecsInfo,
 					   []=:=sd:get_host(list_to_atom(ApplId),WantedHost)],
-	    io:format("AppsToStart ~p~n",[AppsToStart]),    
+	    io:format("AppsToStart ~p~n",[{?MODULE,?LINE,AppsToStart}]),    
 	    StartR=[{{ApplId,ApplVsn},load_start(ApplId,ApplVsn)}||{ApplId,ApplVsn}<-AppsToStart],
-	    io:format("StartR ~p~n",[StartR])
+	    io:format("StartR ~p~n",[{?MODULE,?LINE,StartR}])
     end,
    
     

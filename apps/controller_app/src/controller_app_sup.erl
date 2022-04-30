@@ -32,7 +32,9 @@ init([]) ->
     ChildSpecs = [#{id=>controller,
                     start=>{controller,start,[]}},
 		  #{id=>orchestrate,
-                    start=>{orchestrate,start,[]}}],
+                    start=>{orchestrate,start,[]}},
+		  #{id=>service,
+                    start=>{service,start,[]}}],
     {ok, {SupFlags, ChildSpecs}}.
 
 %% internal functions
