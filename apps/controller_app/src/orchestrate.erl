@@ -206,4 +206,5 @@ local_loop()->
 
 load_start(ApplId,ApplVsn)->
     {ok,Vm}=controller:create_vm(),
-    ok=controller:load_start_appl(ApplId,ApplVsn,Vm).
+    ok=controller:load_start_appl(ApplId,ApplVsn,Vm),
+    timer:sleep(2000).
