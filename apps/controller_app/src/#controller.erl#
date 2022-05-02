@@ -276,7 +276,7 @@ handle_call({load_start_appl,ApplId,ApplVsn,Node},_From, State) ->
 			  end	
 		  end	  
 	  end,
-    io:format("Reply, ApplId,ApplVsn,Node ~p~n",[{Reply,ApplId,ApplVsn,Node,?MODULE,?LINE}]),
+    
     {reply, Reply, State};
 
 handle_call({stop_unload_appl,ApplId,ApplVsn,Node},_From, State) ->
