@@ -195,8 +195,10 @@ local_loop()->
 	    AppsToStart=[{ApplId,ApplVsn}||{{ApplId,ApplVsn},_GitPath}<-ServiceSpecsInfo,
 					   []=:=sd:get_host(list_to_atom(ApplId),WantedHost)],
 	    io:format("AppsToStart ~p~n",[{?MODULE,?LINE,AppsToStart}]),    
-	    StartR=[{{ApplId,ApplVsn},load_start(ApplId,ApplVsn)}||{ApplId,ApplVsn}<-AppsToStart],
-	    io:format("StartR ~p~n",[{?MODULE,?LINE,StartR}])
+%	    StartR=[{{ApplId,ApplVsn},load_start(ApplId,ApplVsn)}||{ApplId,ApplVsn}<-AppsToStart],
+	    
+	   % io:format("StartR ~p~n",[{?MODULE,?LINE,StartR}])
+	    load_start(AppsToStart,[])
     end,
    
     
@@ -204,7 +206,21 @@ local_loop()->
     rpc:cast(node(),?MODULE,loop,[]).
 		  
 
-load_start(ApplId,ApplVsn)->
-    {ok,Vm}=controller:create_vm(),
-    ok=controller:load_start_appl(ApplId,ApplVsn,Vm),
-    timer:sleep(2000).
+load_start([],Result)->
+    Result;
+
+load_start([{ApplId,ApplVsn}|T],Acc)->
+    StartR=case controller:create_vm() of
+	      {ok,Vm}->
+		  case controller:load_start_appl(ApplId,ApplVsn,Vm) of
+		      ok->
+			  ok;
+		      Err->
+			  {error,Err}
+		  end;
+	      Err->
+		  {error,Err}
+	  end,
+    io:format("StartR ~p~n",[{?MODULE,?LINE,ApplId,ApplVsn,StartR}]),
+    timer:sleep(2000),
+    load_start(T,[{ApplId,ApplVsn,StartR}|Acc]).

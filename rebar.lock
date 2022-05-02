@@ -16,5 +16,5 @@
   0},
  {<<"service_app">>,
   {git,"https://github.com/joq62/service_app.git",
-       {ref,"6b284d19595508d7696d69d7a1cdfce5cce0e61c"}},
+       {ref,"6b4e5932ddce81f011ceede3f3f6742e1a3d3434"}},
   0}].

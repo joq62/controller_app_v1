@@ -29,7 +29,7 @@ start()->
     timer:sleep(5000),
     io:format("AllApplications ~p~n",[application:which_applications()]),
     
-    ok=t1_test(),
+  %  ok=t1_test(),
    % ok=t2_test(),
     
    % ok=t22_test(),
