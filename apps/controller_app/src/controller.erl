@@ -237,7 +237,6 @@ handle_call({create_vm},_From, State) ->
 			  NewState=State,
 			  {error,bad_directory};
 		      _->
-			  io:format("create_vm ~p~n",[{Vm,?MODULE,?LINE}]),
 			  case rpc:call(Vm,application,start,[nodelog],5000) of
 			      ok->
 				  rpc:call(Vm,nodelog_server,create,[?LogDir],5000),
@@ -271,7 +270,6 @@ handle_call({delete_vm,Vm},_From, State) ->
     {reply, Reply, NewState};
 
 handle_call({load_start_appl,ApplId,ApplVsn,Node},_From, State) ->
-    io:format("load_start_appl,ApplId,ApplVsn,Node ~p~n",[{ApplId,ApplVsn,Node,?MODULE,?LINE}]),
     Reply=case lists:member(Node,State#state.vm_list) of
 	      false->
 		  {error,[eexists,Node]};
@@ -289,7 +287,6 @@ handle_call({load_start_appl,ApplId,ApplVsn,Node},_From, State) ->
 			  end	
 		  end	  
 	  end,
-    io:format("Reply, ApplId,ApplVsn,Node ~p~n",[{Reply,ApplId,ApplVsn,Node,?MODULE,?LINE}]),
     {reply, Reply, State};
 
 handle_call({stop_unload_appl,ApplId,ApplVsn,Node},_From, State) ->

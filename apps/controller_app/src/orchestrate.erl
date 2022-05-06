@@ -191,10 +191,10 @@ local_loop()->
 	{badrpc,_}->
 	    ok;
 	ServiceSpecsInfo->
-	    io:format("ServiceSpecsInfo ~p~n",[{?MODULE,?LINE,ServiceSpecsInfo}]),    
+%	    io:format("ServiceSpecsInfo ~p~n",[{?MODULE,?LINE,ServiceSpecsInfo}]),    
 	    AppsToStart=[{ApplId,ApplVsn}||{{ApplId,ApplVsn},_GitPath}<-ServiceSpecsInfo,
 					   []=:=sd:get_host(list_to_atom(ApplId),WantedHost)],
-	    io:format("AppsToStart ~p~n",[{?MODULE,?LINE,AppsToStart}]),    
+%	    io:format("AppsToStart ~p~n",[{?MODULE,?LINE,AppsToStart}]),    
 %	    StartR=[{{ApplId,ApplVsn},load_start(ApplId,ApplVsn)}||{ApplId,ApplVsn}<-AppsToStart],
 	    
 	   % io:format("StartR ~p~n",[{?MODULE,?LINE,StartR}])
@@ -214,6 +214,7 @@ load_start([{ApplId,ApplVsn}|T],Acc)->
 	      {ok,Vm}->
 		  case controller:load_start_appl(ApplId,ApplVsn,Vm) of
 		      ok->
+			  nodelog_server:log(notice,?MODULE_STRING,?LINE,"application started "++ApplId),
 			  ok;
 		      Err->
 			  {error,Err}
@@ -221,6 +222,6 @@ load_start([{ApplId,ApplVsn}|T],Acc)->
 	      Err->
 		  {error,Err}
 	  end,
-    io:format("StartR ~p~n",[{?MODULE,?LINE,ApplId,ApplVsn,StartR}]),
+
     timer:sleep(2000),
     load_start(T,[{ApplId,ApplVsn,StartR}|Acc]).

@@ -56,18 +56,18 @@ deploy_info([{_DeplId,_DeplVsn,ApplId,ApplVsn,[all]}|T],Acc)->
     deploy_info(T,NewAcc);
 
 deploy_info([{_DeplId,_DeplVsn,ApplId,ApplVsn,AffinityList}|T],Acc)->
-      io:format("ApplId,ApplVsn,AffinityList ~p~n",[{ApplId,ApplVsn,AffinityList,?MODULE,?LINE}]),
+%      io:format("ApplId,ApplVsn,AffinityList ~p~n",[{ApplId,ApplVsn,AffinityList,?MODULE,?LINE}]),
     NewAcc= case lists:member(node(),AffinityList) of
 		false->
-		    io:format("node not member~p~n",[{node(),AffinityList,?MODULE,?LINE}]),
+%		    io:format("node not member~p~n",[{node(),AffinityList,?MODULE,?LINE}]),
 		    Acc;
 		true->
 		    case config:find(ApplId,ApplVsn) of
 			false->
-			    io:format("config not member~p~n",[{?MODULE,?LINE}]),
+			   % io:format("config not member~p~n",[{?MODULE,?LINE}]),
 			    Acc;
 			{AppId,_VsnList,GitPath}->
-			    io:format("Ok ~p~n",[{AppId,GitPath,?MODULE,?LINE}]),
+			   % io:format("Ok ~p~n",[{AppId,GitPath,?MODULE,?LINE}]),
 			    [{{AppId,ApplVsn},GitPath}|Acc]
 		    end
 	    end,
