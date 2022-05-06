@@ -14,11 +14,12 @@
 %% --------------------------------------------------------------------
 %% Include files
 %% --------------------------------------------------------------------
-
+-include_lib("kernel/include/logger.hrl").
 
 %% --------------------------------------------------------------------
 -define(SERVER,?MODULE).
 -define(ControllerEbin,"controller_app/ebin").
+-define(LogDir,"logs").
 %% External exports
 -export([
 	 all_specs/0,
@@ -203,11 +204,14 @@ ping()->
 %%          {stop, Reason}
 %% --------------------------------------------------------------------
 init([]) ->
+  
+    io:format("nodelog ~p~n",[application:start(nodelog)]),
+    nodelog_server:create(?LogDir),
     io:format("sd_app ~p~n",[application:start(sd_app)]),
     io:format("config ~p~n",[application:start(config_app)]),
-    io:format("log ~p~n",[application:start(log_app)]),
     Info=lib_appl:service_specs_info(),
-    io:format(" Info ~p~n",[{Info,?MODULE,?LINE}]),
+    ok= nodelog_server:log(notice,?MODULE_STRING,?LINE,"server started"),
+
     {ok, #state{ vm_list=[],
 		 service_specs_info=Info}
     }.
@@ -223,9 +227,9 @@ init([]) ->
 %%          {stop, Reason, State}            (terminate/2 is called)
 %% --------------------------------------------------------------------
 
-
 handle_call({create_vm},_From, State) ->
-    Reply=case lib_vm:create() of
+    UniqueNodeName=integer_to_list(erlang:system_time(microsecond),36),
+    Reply=case lib_vm:create(UniqueNodeName) of
 	      {ok,Vm}->
 		  case {rpc:call(Vm,code,add_patha,["ebin"],5000),rpc:call(Vm,code,add_patha,[?ControllerEbin],5000)} of
 		      {{error,_},{error,_}}->
@@ -233,16 +237,24 @@ handle_call({create_vm},_From, State) ->
 			  NewState=State,
 			  {error,bad_directory};
 		      _->
-			  case rpc:call(Vm,application,start,[service_app],5000) of
+			  io:format("create_vm ~p~n",[{Vm,?MODULE,?LINE}]),
+			  case rpc:call(Vm,application,start,[nodelog],5000) of
 			      ok->
-				  NewState=State#state{vm_list=[Vm|State#state.vm_list]},
-				  {ok,Vm};
-			      {error,Reason}->
+				  rpc:call(Vm,nodelog_server,create,[?LogDir],5000),
+				  rpc:call(Vm,nodelog_server,log,[notice,?MODULE_STRING,?LINE,"slave started "++atom_to_list(Vm)],5000),
+				  nodelog_server:log(notice,?MODULE_STRING,?LINE,"slave started "++atom_to_list(Vm)),
+				  case rpc:call(Vm,application,start,[service_app],5000) of
+				      ok->
+					  NewState=State#state{vm_list=[Vm|State#state.vm_list]},
+					  {ok,Vm};
+				      {error,_Reason}->
+					  rpc:call(Vm,init,stop,[],5000),
+					  NewState=State
+				  end;
+			      {error,_Reason}->
 				  rpc:call(Vm,init,stop,[],5000),
-				  NewState=State,
-				  {error,Reason}
-			  end
-			 
+				  NewState=State
+			  end			 
 		  end
 	  end,
     {reply, Reply, NewState};
@@ -259,6 +271,7 @@ handle_call({delete_vm,Vm},_From, State) ->
     {reply, Reply, NewState};
 
 handle_call({load_start_appl,ApplId,ApplVsn,Node},_From, State) ->
+    io:format("load_start_appl,ApplId,ApplVsn,Node ~p~n",[{ApplId,ApplVsn,Node,?MODULE,?LINE}]),
     Reply=case lists:member(Node,State#state.vm_list) of
 	      false->
 		  {error,[eexists,Node]};

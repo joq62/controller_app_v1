@@ -17,7 +17,6 @@
 %% --------------------------------------------------------------------
 %-compile(export_all).
 -export([
-	 create/0,
 	 create/1,
 	 create/5,
 	 delete/1
@@ -32,14 +31,7 @@
 %% Description: Initiate the eunit tests, set upp needed processes etc
 %% Returns: non
 %% --------------------------------------------------------------------
-create()->
-    {ok,HostName}=net:gethostname(),
-    UniqueNodeName=integer_to_list(erlang:system_time(microsecond),36),
-    Cookie=atom_to_list(erlang:get_cookie()),
-    PaArgs=" ",
-    EnvArgs=" ",
-    Result=create(HostName,UniqueNodeName,Cookie,PaArgs,EnvArgs),
-    Result.
+
 
 %% --------------------------------------------------------------------
 %% Function:start/0 
